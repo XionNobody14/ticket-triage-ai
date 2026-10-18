@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Sparkles,
   ArrowRight,
-  Shield,
   Layers
 } from 'lucide-react';
 
@@ -26,40 +25,41 @@ export default function TicketList({
   categories
 }) {
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
+  const [mobileKanbanTab, setMobileKanbanTab] = useState('Abierto'); // 'Abierto' | 'En Proceso' | 'Resuelto'
 
   const urgencyPills = {
-    'Crítica': 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-    'Alta': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    'Media': 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-    'Baja': 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+    'Crítica': 'bg-[#FDE2DB] text-[#7C3627] border-[#7C3627]/20',
+    'Alta': 'bg-[#FDE2DB] text-[#7C3627] border-[#7C3627]/20',
+    'Media': 'bg-[#EDE6FA] text-[#503E70] border-[#503E70]/20',
+    'Baja': 'bg-[#DCF3E4] text-[#2A5A3B] border-[#2A5A3B]/20',
   };
 
   const statusPills = {
-    'Abierto': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'En Proceso': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    'Resuelto': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    'Abierto': 'bg-[#FFF3DD] text-[#8F5700] border-[#8F5700]/20',
+    'En Proceso': 'bg-[#EDE6FA] text-[#503E70] border-[#503E70]/20',
+    'Resuelto': 'bg-[#DCF3E4] text-[#2A5A3B] border-[#2A5A3B]/20',
   };
 
   const kanbanColumns = [
-    { id: 'Abierto', label: 'Tickets Abiertos', icon: AlertCircle, color: 'text-amber-400', border: 'border-amber-500/30' },
-    { id: 'En Proceso', label: 'En Mitigación', icon: Clock, color: 'text-indigo-400', border: 'border-indigo-500/30' },
-    { id: 'Resuelto', label: 'Resueltos & Cerrados', icon: CheckCircle2, color: 'text-emerald-400', border: 'border-emerald-500/30' },
+    { id: 'Abierto', label: 'Abiertos', icon: AlertCircle, color: 'text-[#8F5700]', bg: 'bg-[#FFF3DD]' },
+    { id: 'En Proceso', label: 'En Proceso', icon: Clock, color: 'text-[#503E70]', bg: 'bg-[#EDE6FA]' },
+    { id: 'Resuelto', label: 'Resueltos', icon: CheckCircle2, color: 'text-[#2A5A3B]', bg: 'bg-[#DCF3E4]' },
   ];
 
   return (
     <div className="space-y-4">
       {/* Controls and Filters Toolbar */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="glass-panel rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xs">
         {/* Status Pills */}
-        <div className="flex items-center gap-1 bg-slate-950/60 p-1 rounded-lg border border-slate-800/80">
+        <div className="flex items-center gap-1 bg-white/60 p-1 rounded-xl border border-white/80 overflow-x-auto">
           {['Todos', 'Abierto', 'En Proceso', 'Resuelto'].map((st) => (
             <button
               key={st}
               onClick={() => setSelectedStatus(st)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap min-h-[36px] flex items-center justify-center ${
                 selectedStatus === st
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-[#503E70] font-semibold shadow-xs'
+                  : 'text-[#6C6677] hover:text-[#2E2A36]'
               }`}
             >
               {st}
@@ -67,21 +67,20 @@ export default function TicketList({
           ))}
         </div>
 
-        {/* Filters dropdowns and View switch */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        {/* Filters Dropdowns and View Switch */}
+        <div className="flex items-center gap-2 flex-wrap justify-between md:justify-end">
           {/* Urgency Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-1.5">
             <select
               value={selectedUrgency}
               onChange={(e) => setSelectedUrgency(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="glass-input px-2.5 py-1.5 text-xs text-[#2E2A36] focus:outline-none cursor-pointer min-h-[38px]"
             >
               <option value="Todas">Urgencia: Todas</option>
               <option value="Crítica">🔴 Crítica</option>
               <option value="Alta">🟠 Alta</option>
-              <option value="Media">🔵 Media</option>
-              <option value="Baja">⚪ Baja</option>
+              <option value="Media">🟣 Media</option>
+              <option value="Baja">🟢 Baja</option>
             </select>
           </div>
 
@@ -89,7 +88,7 @@ export default function TicketList({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer max-w-[170px]"
+            className="glass-input px-2.5 py-1.5 text-xs text-[#2E2A36] focus:outline-none cursor-pointer max-w-[160px] min-h-[38px]"
           >
             <option value="Todas">Categoría: Todas</option>
             {categories.map((c) => (
@@ -98,12 +97,12 @@ export default function TicketList({
           </select>
 
           {/* View Toggle */}
-          <div className="flex items-center bg-slate-950/60 p-1 rounded-lg border border-slate-800/80">
+          <div className="flex items-center bg-white/60 p-1 rounded-xl border border-white/80">
             <button
               onClick={() => setViewMode('table')}
               title="Vista de Tabla"
-              className={`p-1.5 rounded-md text-xs cursor-pointer ${
-                viewMode === 'table' ? 'bg-slate-800 text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              className={`p-2 rounded-lg text-xs cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center ${
+                viewMode === 'table' ? 'bg-white text-[#503E70] shadow-xs' : 'text-[#6C6677] hover:text-[#2E2A36]'
               }`}
             >
               <LayoutList className="w-4 h-4" />
@@ -111,8 +110,8 @@ export default function TicketList({
             <button
               onClick={() => setViewMode('kanban')}
               title="Vista Tablero Kanban"
-              className={`p-1.5 rounded-md text-xs cursor-pointer ${
-                viewMode === 'kanban' ? 'bg-slate-800 text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              className={`p-2 rounded-lg text-xs cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center ${
+                viewMode === 'kanban' ? 'bg-white text-[#503E70] shadow-xs' : 'text-[#6C6677] hover:text-[#2E2A36]'
               }`}
             >
               <Kanban className="w-4 h-4" />
@@ -123,19 +122,19 @@ export default function TicketList({
 
       {/* Content View: Table or Kanban */}
       {tickets.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900/40 border border-slate-800/80 rounded-2xl">
-          <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-slate-300 mb-1">No se encontraron tickets</h3>
-          <p className="text-xs text-slate-400">
+        <div className="p-12 text-center glass-panel rounded-2xl">
+          <AlertCircle className="w-8 h-8 text-[#958FA3] mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-[#2E2A36] mb-1">No se encontraron tickets</h3>
+          <p className="text-xs text-[#6C6677]">
             Prueba ajustando los filtros o simula una nueva incidencia con el botón superior.
           </p>
         </div>
       ) : viewMode === 'table' ? (
-        /* DENSE TABLE VIEW */
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+        /* DENSE TABLE VIEW (Responsive with Horizontal Scroll and Rounded Glass Borders) */
+        <div className="glass-panel rounded-2xl overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/70 border-b border-slate-800/80 text-[11px] uppercase tracking-wider text-slate-400">
+            <table className="w-full text-left text-xs min-w-[650px]">
+              <thead className="bg-white/60 border-b border-white/80 text-[11px] uppercase tracking-wider text-[#6C6677]">
                 <tr>
                   <th className="py-3 px-4 font-semibold">ID</th>
                   <th className="py-3 px-4 font-semibold">Incidencia / Título</th>
@@ -143,31 +142,31 @@ export default function TicketList({
                   <th className="py-3 px-4 font-semibold">Urgencia</th>
                   <th className="py-3 px-4 font-semibold">Estado</th>
                   <th className="py-3 px-4 font-semibold">Confianza IA</th>
-                  <th className="py-3 px-4 font-semibold">Equipo Asignado</th>
+                  <th className="py-3 px-4 font-semibold">Equipo</th>
                   <th className="py-3 px-4 font-semibold text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/60">
                 {tickets.map((ticket) => (
                   <tr
                     key={ticket.id}
                     onClick={() => onSelectTicket(ticket)}
-                    className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                    className="hover:bg-white/60 transition-colors cursor-pointer group"
                   >
-                    <td className="py-3.5 px-4 font-mono text-slate-400 font-medium">
+                    <td className="py-3.5 px-4 font-mono text-[#6C6677] font-semibold">
                       #{ticket.id}
                     </td>
-                    <td className="py-3.5 px-4 max-w-md">
-                      <div className="font-medium text-slate-200 group-hover:text-indigo-300 transition-colors line-clamp-1">
+                    <td className="py-3.5 px-4 max-w-xs md:max-w-md">
+                      <div className="font-semibold text-[#2E2A36] group-hover:text-[#503E70] transition-colors line-clamp-1">
                         {ticket.title}
                       </div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                      <div className="text-[11px] text-[#6C6677] line-clamp-1 mt-0.5">
                         {ticket.description}
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700/60">
-                        <Layers className="w-3 h-3 text-slate-400" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/70 text-[#503E70] border border-white/90 shadow-2xs">
+                        <Layers className="w-3 h-3 text-[#958FA3]" />
                         {ticket.category}
                       </span>
                     </td>
@@ -182,14 +181,12 @@ export default function TicketList({
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                        <span className="font-mono text-slate-300 font-medium">
-                          {Math.round((ticket.confidence_score || 0.85) * 100)}%
-                        </span>
+                      <div className="flex items-center gap-1.5 font-mono text-[#503E70] font-semibold">
+                        <Sparkles className="w-3.5 h-3.5 text-[#8E7EB8]" />
+                        <span>{Math.round((ticket.confidence_score || 0.85) * 100)}%</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-400">
+                    <td className="py-3.5 px-4 text-[#6C6677]">
                       {ticket.assigned_team || 'L1-Helpdesk'}
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -198,10 +195,10 @@ export default function TicketList({
                           e.stopPropagation();
                           onSelectTicket(ticket);
                         }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-indigo-600/30 text-slate-300 hover:text-indigo-300 border border-slate-700 hover:border-indigo-500/40 text-xs font-medium transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl glass-btn-secondary text-xs font-medium cursor-pointer shadow-2xs"
                       >
                         <span>Revisar</span>
-                        <ChevronRight className="w-3 h-3" />
+                        <ChevronRight className="w-3 h-3 text-[#958FA3]" />
                       </button>
                     </td>
                   </tr>
@@ -211,94 +208,126 @@ export default function TicketList({
           </div>
         </div>
       ) : (
-        /* KANBAN BOARD VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {kanbanColumns.map((col) => {
-            const ColIcon = col.icon;
-            const columnTickets = tickets.filter((t) => t.status === col.id);
-
-            return (
-              <div
-                key={col.id}
-                className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 flex flex-col min-h-[500px]"
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <ColIcon className={`w-4 h-4 ${col.color}`} />
-                    <span className="text-xs font-semibold text-slate-200">{col.label}</span>
-                  </div>
-                  <span className="px-2 py-0.5 text-xs font-mono font-medium rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                    {columnTickets.length}
+        /* KANBAN BOARD VIEW (Desktop 3 Columns, Mobile Responsive Tab Switcher) */
+        <div className="space-y-4">
+          {/* Mobile Tab Switcher for Kanban (<= 768px) */}
+          <div className="md:hidden flex items-center justify-between p-1 bg-white/70 rounded-2xl border border-white/80 shadow-xs">
+            {kanbanColumns.map((col) => {
+              const count = tickets.filter((t) => t.status === col.id).length;
+              const isActive = mobileKanbanTab === col.id;
+              return (
+                <button
+                  key={col.id}
+                  onClick={() => setMobileKanbanTab(col.id)}
+                  className={`flex-1 py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[44px] ${
+                    isActive
+                      ? 'bg-white text-[#503E70] shadow-sm border border-white/90'
+                      : 'text-[#6C6677] hover:text-[#2E2A36]'
+                  }`}
+                >
+                  <span>{col.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${col.bg} ${col.color}`}>
+                    {count}
                   </span>
-                </div>
+                </button>
+              );
+            })}
+          </div>
 
-                {/* Cards Container */}
-                <div className="space-y-3 flex-1 overflow-y-auto max-h-[680px] pr-1">
-                  {columnTickets.map((ticket) => (
-                    <div
-                      key={ticket.id}
-                      onClick={() => onSelectTicket(ticket)}
-                      className="bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-3.5 transition-all shadow-sm hover:shadow-indigo-500/5 cursor-pointer group space-y-2.5"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-mono text-slate-400">#{ticket.id}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyPills[ticket.urgency]}`}>
-                          {ticket.urgency}
-                        </span>
+          {/* Kanban Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {kanbanColumns.map((col) => {
+              const ColIcon = col.icon;
+              const columnTickets = tickets.filter((t) => t.status === col.id);
+              const isVisibleOnMobile = mobileKanbanTab === col.id;
+
+              return (
+                <div
+                  key={col.id}
+                  className={`glass-panel rounded-2xl p-3.5 flex-col min-h-[420px] shadow-xs ${
+                    isVisibleOnMobile ? 'flex' : 'hidden md:flex'
+                  }`}
+                >
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/60">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-lg ${col.bg} flex items-center justify-center ${col.color}`}>
+                        <ColIcon className="w-4 h-4" />
                       </div>
+                      <span className="text-xs font-bold text-[#2E2A36]">{col.label}</span>
+                    </div>
+                    <span className="px-2 py-0.5 text-xs font-mono font-semibold rounded-full bg-white text-[#503E70] border border-white/80 shadow-2xs">
+                      {columnTickets.length}
+                    </span>
+                  </div>
 
-                      <h4 className="text-xs font-semibold text-slate-200 group-hover:text-indigo-300 line-clamp-2 transition-colors">
-                        {ticket.title}
-                      </h4>
+                  {/* Cards Container */}
+                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[640px] pr-0.5">
+                    {columnTickets.map((ticket) => (
+                      <div
+                        key={ticket.id}
+                        onClick={() => onSelectTicket(ticket)}
+                        className="glass-card p-4 transition-all cursor-pointer group space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-mono text-[#6C6677] font-semibold">#{ticket.id}</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${urgencyPills[ticket.urgency]}`}>
+                            {ticket.urgency}
+                          </span>
+                        </div>
 
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                        {ticket.description}
-                      </p>
+                        <h4 className="text-xs font-bold text-[#2E2A36] group-hover:text-[#503E70] line-clamp-2 transition-colors">
+                          {ticket.title}
+                        </h4>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-                        <span className="text-slate-400 truncate max-w-[130px]">
-                          {ticket.assigned_team}
-                        </span>
+                        <p className="text-[11px] text-[#6C6677] line-clamp-2 leading-relaxed">
+                          {ticket.description}
+                        </p>
 
-                        {col.id === 'Abierto' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onUpdateStatus(ticket.id, 'En Proceso');
-                            }}
-                            className="flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
-                          >
-                            <span>Iniciar</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
-                        )}
+                        <div className="flex items-center justify-between pt-2 border-t border-white/60 text-[11px] text-[#6C6677]">
+                          <span className="truncate max-w-[130px] font-medium text-[#958FA3]">
+                            {ticket.assigned_team}
+                          </span>
 
-                        {col.id === 'En Proceso' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onUpdateStatus(ticket.id, 'Resuelto');
-                            }}
-                            className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
-                          >
-                            <span>Resolver</span>
-                            <CheckCircle2 className="w-3 h-3" />
-                          </button>
-                        )}
+                          {col.id === 'Abierto' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateStatus(ticket.id, 'En Proceso');
+                              }}
+                              className="flex items-center gap-1 text-[11px] text-[#503E70] font-semibold hover:underline cursor-pointer min-h-[36px]"
+                            >
+                              <span>Iniciar</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {col.id === 'En Proceso' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateStatus(ticket.id, 'Resuelto');
+                              }}
+                              className="flex items-center gap-1 text-[11px] text-[#2A5A3B] font-semibold hover:underline cursor-pointer min-h-[36px]"
+                            >
+                              <span>Resolver</span>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  {columnTickets.length === 0 && (
-                    <div className="text-center py-10 text-xs text-slate-400 border border-dashed border-slate-800/60 rounded-xl">
-                      Sin tickets en este estado
-                    </div>
-                  )}
+                    {columnTickets.length === 0 && (
+                      <div className="text-center py-12 text-xs text-[#958FA3] border border-dashed border-white/80 rounded-2xl bg-white/20">
+                        Sin tickets en esta columna
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

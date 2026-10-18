@@ -69,3 +69,27 @@ Orquestado mediante el patrón **Coordinator-Workers**. Cada agente marca con `[
 - [x] Realizar commit inicial de código (`git add .`, `git commit -m "feat: initial commit - ticket triage multi-agent platform"`).
 - [x] Publicar repositorio en GitHub usando `gh repo create ticket-triage-ai --public --source=. --remote=origin --push`.
 - [x] Verificar y confirmar la URL pública del repositorio en GitHub.
+
+---
+
+## 🌿 Fase 6: Refactorización Neu-Natural Glass & Responsividad Móvil
+
+### Subagente 1: @styles_architect.md (Paleta de Variables y Sistema Glassmorphic)
+- [x] Configurar fondo global con degradado orgánico lila pastel / verde salvia tenue.
+- [x] Definir variables CSS glassmorphic (`--glass-bg`, `--glass-border`, `--glass-blur`, `--glass-shadow`).
+- [x] Configurar badges de prioridad en pasteles de bajo contraste (Menta `#DCF3E4`, Lila `#EDE6FA`, Coral `#FDE2DB`).
+- [x] Establecer tipografía en carbón suave (`#2E2A36`) y secundario (`#6C6677`).
+- [x] Crear clases de utilidad: `.glass-card`, `.glass-panel`, `.glass-input`.
+
+### Subagente 2: @ui_mobile_engineer.md (Componentes y Adaptación Móvil)
+- [x] Adaptar navegación: Sidebar responsive con Drawer móvil y Bottom Navigation Bar (targets >= 44x44px).
+- [x] Adaptar Tablero Kanban en móvil con pestañas intercambiables para evitar desbordamiento horizontal.
+- [x] Adaptar modales de Detalle y Triaje como Bottom Sheet / Fullscreen táctil con cierre rápido.
+- [x] Aplicar `.glass-input` y tipografía de 16px en inputs para prevenir auto-zoom en iOS.
+- [x] Integrar `.glass-card` con bordes redondeados (16-20px) y backdrop-filter activo en todas las tarjetas.
+
+### Subagente 3: @qa_reviewer.md (Validación, Build y Git)
+- [x] Validar ausencia de errores de sintaxis y solapamientos en breakpoints (375px y 768px).
+- [x] Ejecutar `npm run build` en `frontend/` y verificar compilación limpia sin advertencias.
+- [x] Confirmar checklist en `TASKS.md`.
+- [x] Realizar commit y push semántico a GitHub (`feat(ui): implement neu-natural glass design and mobile responsiveness`).

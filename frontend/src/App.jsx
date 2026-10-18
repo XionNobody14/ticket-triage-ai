@@ -8,6 +8,12 @@ import TriageModal from './components/TriageModal';
 import AnalyticsView from './components/AnalyticsView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
 import {
+  Inbox,
+  BarChart3,
+  BookOpen,
+  Sparkles
+} from 'lucide-react';
+import {
   fetchTickets,
   fetchTicket,
   updateTicket,
@@ -23,6 +29,7 @@ export default function App() {
   const [isTriageOpen, setIsTriageOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isHealthy, setIsHealthy] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Filters
   const [selectedUrgency, setSelectedUrgency] = useState('Todas');
@@ -134,17 +141,19 @@ export default function App() {
     }
   };
 
-  const openTicketsCount = (analytics?.open_tickets || 0);
+  const openTicketsCount = analytics?.open_tickets || 0;
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden font-sans">
+      {/* Sidebar: Persistent on Desktop, Slide-out Drawer on Mobile */}
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
         openTicketsCount={openTicketsCount}
         onOpenTriage={() => setIsTriageOpen(true)}
         isHealthy={isHealthy}
+        mobileOpen={mobileMenuOpen}
+        setMobileOpen={setMobileMenuOpen}
       />
 
       {/* Main Workspace Area */}
@@ -157,12 +166,13 @@ export default function App() {
           isRefreshing={isRefreshing}
           onOpenTriage={() => setIsTriageOpen(true)}
           currentView={currentView}
+          onToggleMobileMenu={() => setMobileMenuOpen(true)}
         />
 
         {/* Viewport Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
           {currentView === 'tickets' && (
-            <div className="space-y-6 max-w-7xl mx-auto">
+            <div className="space-y-5 max-w-7xl mx-auto">
               <KPICards analytics={analytics} />
               <TicketList
                 tickets={tickets}
@@ -193,6 +203,56 @@ export default function App() {
         </main>
       </div>
 
+      {/* Mobile Bottom Navigation Bar (<= 768px) with Touch Targets >= 44x44px */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 glass-panel border-t border-white/70 px-3 py-2 z-30 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => setCurrentView('tickets')}
+          className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] px-2 rounded-xl transition-all cursor-pointer ${
+            currentView === 'tickets' ? 'text-[#503E70] font-bold bg-white/70' : 'text-[#6C6677]'
+          }`}
+        >
+          <div className="relative">
+            <Inbox className="w-5 h-5" />
+            {openTicketsCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-[#EDE6FA] text-[#503E70] border border-[#503E70]/20 text-[9px] font-bold flex items-center justify-center font-mono">
+                {openTicketsCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-0.5">Tickets</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('analytics')}
+          className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] px-2 rounded-xl transition-all cursor-pointer ${
+            currentView === 'analytics' ? 'text-[#503E70] font-bold bg-white/70' : 'text-[#6C6677]'
+          }`}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Analítica</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('knowledge')}
+          className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] px-2 rounded-xl transition-all cursor-pointer ${
+            currentView === 'knowledge' ? 'text-[#503E70] font-bold bg-white/70' : 'text-[#6C6677]'
+          }`}
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Base SOP</span>
+        </button>
+
+        <button
+          onClick={() => setIsTriageOpen(true)}
+          className="flex flex-col items-center justify-center min-w-[48px] min-h-[44px] px-2 rounded-xl transition-all cursor-pointer text-[#7663A4]"
+        >
+          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-[#9B8DC4] to-[#7663A4] flex items-center justify-center text-white shadow-xs">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] mt-0.5 font-bold">Simular</span>
+        </button>
+      </nav>
+
       {/* Modals */}
       {selectedTicket && (
         <TicketDetailModal
@@ -212,9 +272,9 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-slate-900 border border-indigo-500/40 text-slate-100 text-xs shadow-2xl shadow-indigo-500/10 flex items-center gap-2 animate-in slide-in-from-bottom duration-200">
-          <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-          <span>{toastMessage}</span>
+        <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 px-4 py-3 rounded-2xl glass-modal text-[#2E2A36] text-xs shadow-xl flex items-center gap-2.5 animate-in slide-in-from-bottom duration-200 border border-white">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#8E7EB8] animate-pulse" />
+          <span className="font-semibold">{toastMessage}</span>
         </div>
       )}
     </div>

@@ -2,26 +2,142 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
+
+    /* Neu-Natural Glass Variables */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-hover: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.65);
+    --glass-blur: blur(14px);
+    --glass-shadow: 0 8px 32px 0 rgba(112, 98, 142, 0.08);
+
+    /* Typography */
+    --text-primary: #2E2A36;
+    --text-secondary: #6C6677;
+    --text-muted: #958FA3;
+
+    /* Priority Badges - Soft Pastels */
+    --badge-baja-bg: #DCF3E4;
+    --badge-baja-text: #2A5A3B;
+
+    --badge-media-bg: #EDE6FA;
+    --badge-media-text: #503E70;
+
+    --badge-alta-bg: #FDE2DB;
+    --badge-alta-text: #7C3627;
+
+    --badge-critica-bg: #FDE2DB;
+    --badge-critica-text: #7C3627;
+
+    /* Status Badges */
+    --status-abierto-bg: #FFF3DD;
+    --status-abierto-text: #8F5700;
+    --status-proceso-bg: #EDE6FA;
+    --status-proceso-text: #503E70;
+    --status-resuelto-bg: #DCF3E4;
+    --status-resuelto-text: #2A5A3B;
   }
+
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white;
+    background: radial-gradient(at 15% 20%, rgba(226, 219, 245, 0.6) 0px, transparent 50%),
+                radial-gradient(at 85% 80%, rgba(212, 230, 219, 0.5) 0px, transparent 50%),
+                #F5F3FA;
+    color: var(--text-primary);
+    min-height: 100vh;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    selection-background-color: #D3C9ED;
+    selection-color: #2E2A36;
   }
 }
 
-/* Custom sleek scrollbar */
+/* Glassmorphism System Utilities */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: 0 12px 36px 0 rgba(112, 98, 142, 0.12);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 32px 0 rgba(112, 98, 142, 0.06);
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px 0 rgba(76, 61, 102, 0.16);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(198, 190, 218, 0.55);
+  color: var(--text-primary);
+  font-size: 16px; /* Previene auto-zoom molesto en iOS safari */
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(142, 126, 184, 0.75);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(184, 169, 224, 0.25);
+}
+
+.glass-btn-primary {
+  background: linear-gradient(135deg, #8E7EB8 0%, #7663A4 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px 0 rgba(118, 99, 164, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-btn-primary:hover {
+  background: linear-gradient(135deg, #9B8CC3 0%, #816EAF 100%);
+  box-shadow: 0 6px 20px 0 rgba(118, 99, 164, 0.35);
+}
+
+.glass-btn-secondary {
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--text-primary);
+  border: 1px solid rgba(205, 197, 224, 0.6);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(162, 150, 190, 0.7);
+}
+
+/* Custom Soft Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: rgba(235, 230, 245, 0.25);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: rgba(180, 170, 202, 0.45);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(150, 138, 175, 0.65);
 }
