@@ -59,7 +59,7 @@ function RestrictedAccessScreen({ onAuthenticate, errorReason }) {
             Acceso restringido para entrevistas técnicas.
           </p>
           <p className="text-xs text-[#6C6677]/80 mt-3 leading-relaxed">
-            Esta instancia opera bajo entorno cerrado. Utiliza el enlace autorizado con parámetro de acceso (<code className="bg-white/60 px-1.5 py-0.5 rounded text-[#503E70] font-mono">?key=...</code>) o introduce tu clave privada para continuar:
+            Esta instancia opera bajo entorno cerrado. Introduce tu clave de acceso autorizada para continuar:
           </p>
         </div>
 
@@ -74,7 +74,7 @@ function RestrictedAccessScreen({ onAuthenticate, errorReason }) {
           <div className="relative">
             <input
               type="password"
-              placeholder="Clave de acceso (ej. Demo2026...)"
+              placeholder="Ingresa la clave de acceso..."
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
               className="glass-input w-full px-4 py-3 text-sm text-[#2E2A36] placeholder-[#6C6677]/60 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#8E7EB8]/40 border border-white/70"
