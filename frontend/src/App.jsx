@@ -53,15 +53,18 @@ export default function App() {
           category: selectedCategory,
           search: searchTerm,
         }),
-        fetchAnalytics(),
+        fetchAnalytics().catch((err) => {
+          console.warn('[Analytics] No se pudo cargar analítica:', err);
+          return null;
+        }),
         fetchHealth().catch(() => ({ status: 'error' }))
       ]);
 
-      setTickets(ticketsData);
-      setAnalytics(analyticsData);
+      setTickets(ticketsData || []);
+      if (analyticsData) setAnalytics(analyticsData);
       setIsHealthy(healthData.status === 'healthy');
     } catch (err) {
-      console.error('Error al cargar datos:', err);
+      console.error('Error al cargar datos en consola de soporte:', err);
       setIsHealthy(false);
     } finally {
       setIsRefreshing(false);
