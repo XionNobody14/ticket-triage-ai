@@ -102,3 +102,29 @@ def test_get_knowledge():
     assert "id" in first
     assert "title" in first
     assert "solution_steps" in first
+
+def test_demo_access_key_protection(monkeypatch):
+    # Set DEMO_ACCESS_KEY for this test
+    monkeypatch.setenv("DEMO_ACCESS_KEY", "TestSecretKey123")
+
+    # 1. Public routes should remain accessible without key
+    assert client.get("/api/health").status_code == 200
+    assert client.get("/docs").status_code == 200
+    assert client.get("/").status_code == 200
+
+    # 2. Protected routes should return 401 Unauthorized without key
+    res_unauth = client.get("/api/tickets")
+    assert res_unauth.status_code == 401
+
+    # 3. Protected routes with wrong key should return 401
+    res_wrong = client.get("/api/tickets", headers={"X-Demo-Key": "WrongKey"})
+    assert res_wrong.status_code == 401
+
+    # 4. Protected routes with valid X-Demo-Key header should succeed
+    res_valid_header = client.get("/api/tickets", headers={"X-Demo-Key": "TestSecretKey123"})
+    assert res_valid_header.status_code == 200
+
+    # 5. Protected routes with valid Authorization: Bearer should succeed
+    res_valid_bearer = client.get("/api/tickets", headers={"Authorization": "Bearer TestSecretKey123"})
+    assert res_valid_bearer.status_code == 200
+

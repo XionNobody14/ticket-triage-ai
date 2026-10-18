@@ -9,12 +9,27 @@ const getApiUrl = (endpoint) => {
   return cleanEndpoint.startsWith('/api') ? `${API_BASE}${cleanEndpoint}` : `${API_BASE}/api${cleanEndpoint}`;
 };
 
-export { API_BASE };
+// Generador de cabeceras automáticas con inyección de X-Demo-Key desde sessionStorage
+const getAuthHeaders = (extraHeaders = {}) => {
+  const demoKey = typeof window !== 'undefined' ? (sessionStorage.getItem('demo_key') || '') : '';
+  return {
+    'X-Demo-Key': demoKey,
+    ...extraHeaders,
+  };
+};
+
+export { API_BASE, getAuthHeaders };
 
 export async function fetchHealth() {
   try {
-    const res = await fetch(getApiUrl('/health'));
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(getApiUrl('/health'), {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Health Check] Error conectando a ${API_BASE}:`, err);
@@ -32,8 +47,21 @@ export async function fetchTickets(params = {}) {
     if (params.search) query.append('search', params.search);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
-    const res = await fetch(getApiUrl(`/tickets${queryString}`));
-    if (!res.ok) throw new Error(`Error HTTP ${res.status} al obtener tickets`);
+    const res = await fetch(getApiUrl(`/tickets${queryString}`), {
+      headers: getAuthHeaders(),
+    });
+
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+
+    if (!res.ok) {
+      const err = new Error(`Error HTTP ${res.status} al obtener tickets`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Network Error] Fallo al conectar con ${API_BASE}:`, err);
@@ -43,8 +71,19 @@ export async function fetchTickets(params = {}) {
 
 export async function fetchTicket(id) {
   try {
-    const res = await fetch(getApiUrl(`/tickets/${id}`));
-    if (!res.ok) throw new Error(`Error al obtener ticket #${id}: HTTP ${res.status}`);
+    const res = await fetch(getApiUrl(`/tickets/${id}`), {
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error al obtener ticket #${id}: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] Error al obtener ticket #${id}:`, err);
@@ -56,10 +95,19 @@ export async function createTicket(ticketData) {
   try {
     const res = await fetch(getApiUrl('/tickets'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(ticketData),
     });
-    if (!res.ok) throw new Error(`Error al crear ticket: HTTP ${res.status}`);
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error al crear ticket: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] Error al crear ticket:`, err);
@@ -71,10 +119,19 @@ export async function updateTicket(id, updateData) {
   try {
     const res = await fetch(getApiUrl(`/tickets/${id}`), {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(updateData),
     });
-    if (!res.ok) throw new Error(`Error al actualizar ticket #${id}: HTTP ${res.status}`);
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error al actualizar ticket #${id}: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] Error al actualizar ticket #${id}:`, err);
@@ -86,12 +143,19 @@ export async function executeTriage(triageData) {
   try {
     const res = await fetch(getApiUrl('/triage'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(triageData),
     });
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
     if (!res.ok) {
       const errorBody = await res.json().catch(() => ({}));
-      throw new Error(errorBody.detail || `Error al ejecutar triaje agéntico: HTTP ${res.status}`);
+      const err = new Error(errorBody.detail || `Error al ejecutar triaje agéntico: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
     }
     return await res.json();
   } catch (err) {
@@ -102,8 +166,19 @@ export async function executeTriage(triageData) {
 
 export async function fetchAnalytics() {
   try {
-    const res = await fetch(getApiUrl('/analytics'));
-    if (!res.ok) throw new Error(`Error al obtener analítica: HTTP ${res.status}`);
+    const res = await fetch(getApiUrl('/analytics'), {
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error al obtener analítica: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] Error al obtener analítica de operaciones:`, err);
@@ -118,8 +193,19 @@ export async function fetchKnowledge(params = {}) {
     if (params.search) query.append('search', params.search);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
-    const res = await fetch(getApiUrl(`/knowledge${queryString}`));
-    if (!res.ok) throw new Error(`Error al obtener base de conocimiento: HTTP ${res.status}`);
+    const res = await fetch(getApiUrl(`/knowledge${queryString}`), {
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401) {
+      const err = new Error('UNAUTHORIZED');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error al obtener base de conocimiento: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] Error al obtener base de conocimiento:`, err);

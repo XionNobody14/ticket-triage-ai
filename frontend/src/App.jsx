@@ -11,15 +11,94 @@ import {
   Inbox,
   BarChart3,
   BookOpen,
-  Sparkles
+  Sparkles,
+  Lock,
+  KeyRound,
+  ShieldAlert,
+  ArrowRight
 } from 'lucide-react';
 import {
   fetchTickets,
   fetchTicket,
   updateTicket,
   fetchAnalytics,
-  fetchHealth
+  fetchHealth,
+  API_BASE
 } from './services/api';
+
+// Pantalla de acceso restringido bajo estética Neu-Natural Glass
+function RestrictedAccessScreen({ onAuthenticate, errorReason }) {
+  const [inputKey, setInputKey] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (inputKey.trim()) {
+      onAuthenticate(inputKey.trim());
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+      {/* Background ambient orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#9B8DC4]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#86A892]/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="glass-card max-w-md w-full p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/80 relative z-10 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#EDE6FA] to-[#DCF3E4] border border-white/80 flex items-center justify-center mx-auto shadow-xs text-[#503E70]">
+          <Lock className="w-8 h-8" />
+        </div>
+
+        <div className="mt-5">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-[#EDE6FA] text-[#503E70] border border-[#503E70]/20">
+            <KeyRound className="w-3.5 h-3.5" /> Acceso Restringido
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#2E2A36] tracking-tight mt-3">
+            Plataforma en Modo Demostración Privada
+          </h1>
+          <p className="text-sm font-medium text-[#6C6677] mt-2">
+            Acceso restringido para entrevistas técnicas.
+          </p>
+          <p className="text-xs text-[#6C6677]/80 mt-3 leading-relaxed">
+            Esta instancia opera bajo entorno cerrado. Utiliza el enlace autorizado con parámetro de acceso (<code className="bg-white/60 px-1.5 py-0.5 rounded text-[#503E70] font-mono">?key=...</code>) o introduce tu clave privada para continuar:
+          </p>
+        </div>
+
+        {errorReason && (
+          <div className="mt-4 p-3 rounded-xl bg-[#FDE2DB] border border-[#F6C5B8] text-[#7C3627] text-xs font-semibold flex items-center gap-2 text-left">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>{errorReason}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
+          <div className="relative">
+            <input
+              type="password"
+              placeholder="Clave de acceso (ej. Demo2026...)"
+              value={inputKey}
+              onChange={(e) => setInputKey(e.target.value)}
+              className="glass-input w-full px-4 py-3 text-sm text-[#2E2A36] placeholder-[#6C6677]/60 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#8E7EB8]/40 border border-white/70"
+              autoFocus
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!inputKey.trim()}
+            className="w-full py-3 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#8E7EB8] to-[#503E70] hover:opacity-95 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Desbloquear Consola</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+
+        <div className="mt-6 pt-5 border-t border-white/50 text-[11px] text-[#6C6677]/70 font-mono">
+          Ticket Triage AI • Production Environment
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [currentView, setCurrentView] = useState('tickets'); // 'tickets' | 'analytics' | 'knowledge'
@@ -30,6 +109,20 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isHealthy, setIsHealthy] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const keyFromUrl = params.get('key') || params.get('access_token');
+    if (keyFromUrl) {
+      sessionStorage.setItem('demo_key', keyFromUrl);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return true;
+    }
+    return Boolean(sessionStorage.getItem('demo_key'));
+  });
+  const [authError, setAuthError] = useState(null);
 
   // Filters
   const [selectedUrgency, setSelectedUrgency] = useState('Todas');
@@ -43,9 +136,23 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const handleAuthenticate = (key) => {
+    sessionStorage.setItem('demo_key', key);
+    setIsAuthenticated(true);
+    setAuthError(null);
+  };
+
   const loadData = async () => {
+    // Si no hay clave en sesión, marcar como no autenticado
+    const currentKey = sessionStorage.getItem('demo_key');
+    if (!currentKey) {
+      setIsAuthenticated(false);
+      return;
+    }
+
     setIsRefreshing(true);
     try {
+      console.log(`Conectando a: ${API_BASE}`);
       const [ticketsData, analyticsData, healthData] = await Promise.all([
         fetchTickets({
           urgency: selectedUrgency,
@@ -54,6 +161,7 @@ export default function App() {
           search: searchTerm,
         }),
         fetchAnalytics().catch((err) => {
+          if (err.status === 401) throw err;
           console.warn('[Analytics] No se pudo cargar analítica:', err);
           return null;
         }),
@@ -63,17 +171,28 @@ export default function App() {
       setTickets(ticketsData || []);
       if (analyticsData) setAnalytics(analyticsData);
       setIsHealthy(healthData.status === 'healthy');
+      setIsAuthenticated(true);
+      setAuthError(null);
     } catch (err) {
-      console.error('Error al cargar datos en consola de soporte:', err);
-      setIsHealthy(false);
+      if (err.status === 401 || err.message === 'UNAUTHORIZED') {
+        console.warn('Acceso denegado (401 Unauthorized). Bloqueando pantalla.');
+        setIsAuthenticated(false);
+        setAuthError('La clave de acceso ingresada es inválida o expiró.');
+      } else {
+        console.error('Error al cargar datos en consola de soporte:', err);
+        setIsHealthy(false);
+      }
     } finally {
       setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, [selectedUrgency, selectedStatus, selectedCategory, searchTerm]);
+    // Revisar si existe clave al montar o cambiar filtros
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated, selectedUrgency, selectedStatus, selectedCategory, searchTerm]);
 
   // Extract distinct categories from analytics
   const categories = analytics?.categories?.map((c) => c.category) || [
@@ -91,6 +210,10 @@ export default function App() {
       const fullTicket = await fetchTicket(ticketSummary.id);
       setSelectedTicket(fullTicket);
     } catch (err) {
+      if (err.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       console.error(err);
       setSelectedTicket(ticketSummary);
     }
@@ -103,6 +226,10 @@ export default function App() {
       showToast(`Ticket #${ticketId} actualizado a estado "${newStatus}".`);
       loadData();
     } catch (err) {
+      if (err.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       console.error(err);
     }
   };
@@ -115,6 +242,10 @@ export default function App() {
       showToast(`Ticket #${ticketId} guardado exitosamente.`);
       loadData();
     } catch (err) {
+      if (err.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       console.error(err);
     }
   };
@@ -131,6 +262,10 @@ export default function App() {
       showToast(`Ticket #${ticketId} marcado como RESUELTO.`);
       loadData();
     } catch (err) {
+      if (err.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       console.error(err);
     }
   };
@@ -143,6 +278,16 @@ export default function App() {
       handleSelectTicket(newTicket);
     }
   };
+
+  // Si no está autenticado, renderizar pantalla limpia de acceso restringido
+  if (!isAuthenticated) {
+    return (
+      <RestrictedAccessScreen
+        onAuthenticate={handleAuthenticate}
+        errorReason={authError}
+      />
+    );
+  }
 
   const openTicketsCount = analytics?.open_tickets || 0;
 
