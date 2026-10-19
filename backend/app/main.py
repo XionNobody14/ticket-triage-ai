@@ -3,11 +3,38 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import API_TITLE, API_VERSION, API_DESCRIPTION
-from app.database import engine, Base
-from app.routers import tickets, triage, analytics, knowledge
+from app.database import engine, Base, SessionLocal
+from app.models import User
+from app.auth_utils import hash_password
+from app.routers import tickets, triage, analytics, knowledge, auth, users
 
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
+
+def init_admin_user():
+    """Garantiza la existencia del usuario administrador inicial admin@xion.com"""
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.email == "admin@xion.com").first()
+        if not admin:
+            admin = User(
+                email="admin@xion.com",
+                full_name="Administrador Principal",
+                role="admin",
+                hashed_password=hash_password("Heartless2003"),
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("[AUTH] Usuario administrador principal (admin@xion.com) inicializado exitosamente.")
+    except Exception as e:
+        print(f"[AUTH Warning] No se pudo inicializar admin@xion.com: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+# Inicializar admin inicial
+init_admin_user()
 
 app = FastAPI(
     title=API_TITLE,
@@ -35,7 +62,7 @@ async def demo_security_middleware(request: Request, call_next):
 
     path = request.url.path
 
-    # Rutas públicas exentas de autenticación
+    # Rutas públicas exentas de validación de DEMO_ACCESS_KEY
     public_paths = (
         "/",
         "/docs",
@@ -56,8 +83,9 @@ async def demo_security_middleware(request: Request, call_next):
         if auth_header and auth_header.startswith("Bearer "):
             bearer_key = auth_header[7:].strip()
 
-        provided_key = header_key or bearer_key
-        if not provided_key or provided_key != demo_access_key:
+        # Permitir si X-Demo-Key coincide, o si Authorization coincide con la clave demo
+        is_demo_valid = (header_key == demo_access_key) or (not header_key and bearer_key == demo_access_key)
+        if not is_demo_valid:
             return JSONResponse(
                 status_code=401,
                 content={
@@ -76,13 +104,15 @@ async def demo_security_middleware(request: Request, call_next):
 @app.middleware("http")
 async def api_alias_middleware(request: Request, call_next):
     path = request.scope.get("path", "")
-    prefixes = ("/tickets", "/triage", "/analytics", "/knowledge", "/health")
+    prefixes = ("/tickets", "/triage", "/analytics", "/knowledge", "/health", "/auth", "/users")
     if any(path == p or path.startswith(p + "/") for p in prefixes):
         request.scope["path"] = f"/api{path}"
     response = await call_next(request)
     return response
 
 # Inclusión de Routers
+app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(tickets.router)
 app.include_router(triage.router)
 app.include_router(analytics.router)

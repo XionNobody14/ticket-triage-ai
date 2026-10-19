@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -92,3 +92,25 @@ class KnowledgeArticle(Base):
             "escalation_team": self.escalation_team,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=True)
+    role = Column(String(50), nullable=False, default="agent")  # "admin" | "agent"
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+

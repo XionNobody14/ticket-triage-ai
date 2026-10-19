@@ -4,8 +4,9 @@ Crea la base de datos, puebla los artículos de SOPs y precarga al menos 12 tick
 """
 from datetime import datetime, timedelta, timezone
 from app.database import engine, SessionLocal, Base
-from app.models import Ticket, AuditLog, KnowledgeArticle
+from app.models import Ticket, AuditLog, KnowledgeArticle, User
 from app.knowledge_base import DEFAULT_KNOWLEDGE_ARTICLES
+from app.auth_utils import hash_password
 
 import sys
 
@@ -391,6 +392,23 @@ def run_seed():
 
         db.commit()
         print(f"[SUCCESS] Se crearon exitosamente {len(sample_tickets)} tickets corporativos con historial completo.")
+
+        # Verificar y crear usuario Administrador Principal si no existe
+        admin = db.query(User).filter(User.email == "admin@xion.com").first()
+        if not admin:
+            admin = User(
+                email="admin@xion.com",
+                full_name="Administrador Principal",
+                role="admin",
+                hashed_password=hash_password("Heartless2003"),
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("👤 Usuario Administrador Principal (admin@xion.com) asegurado.")
+        else:
+            print("👤 Usuario Administrador Principal (admin@xion.com) ya existe.")
+
 
     except Exception as e:
         db.rollback()

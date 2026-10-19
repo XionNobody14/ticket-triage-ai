@@ -9,13 +9,19 @@ const getApiUrl = (endpoint) => {
   return cleanEndpoint.startsWith('/api') ? `${API_BASE}${cleanEndpoint}` : `${API_BASE}/api${cleanEndpoint}`;
 };
 
-// Generador de cabeceras automáticas con inyección de X-Demo-Key desde sessionStorage
+// Generador de cabeceras automáticas con inyección de X-Demo-Key y Token JWT de sesión
 const getAuthHeaders = (extraHeaders = {}) => {
   const demoKey = typeof window !== 'undefined' ? (sessionStorage.getItem('demo_key') || '') : '';
-  return {
+  const authToken = typeof window !== 'undefined' ? (sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token') || '') : '';
+  const headers = {
     'X-Demo-Key': demoKey,
     ...extraHeaders,
   };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+    headers['X-User-Token'] = authToken;
+  }
+  return headers;
 };
 
 export { API_BASE, getAuthHeaders };
@@ -33,6 +39,91 @@ export async function fetchHealth() {
     return await res.json();
   } catch (err) {
     console.error(`[API Health Check] Error conectando a ${API_BASE}:`, err);
+    throw err;
+  }
+}
+
+export async function loginUser(credentials) {
+  try {
+    const res = await fetch(getApiUrl('/auth/login'), {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(credentials),
+    });
+    if (res.status === 401) {
+      const errorBody = await res.json().catch(() => ({}));
+      const err = new Error(errorBody.detail || 'Credenciales inválidas. Verifica tu correo y contraseña.');
+      err.status = 401;
+      throw err;
+    }
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      const err = new Error(errorBody.detail || `Error HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('[API Auth] Error en inicio de sesión:', err);
+    throw err;
+  }
+}
+
+export async function fetchCurrentUser() {
+  try {
+    const res = await fetch(getApiUrl('/auth/me'), {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('[API Auth] Error al obtener usuario actual:', err);
+    throw err;
+  }
+}
+
+export async function fetchUsers() {
+  try {
+    const res = await fetch(getApiUrl('/users'), {
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401 || res.status === 403) {
+      const err = new Error('No autorizado para ver lista de usuarios corporativos.');
+      err.status = res.status;
+      throw err;
+    }
+    if (!res.ok) {
+      const err = new Error(`Error HTTP ${res.status} al listar usuarios`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('[API Users] Error al listar usuarios:', err);
+    throw err;
+  }
+}
+
+export async function createUser(userData) {
+  try {
+    const res = await fetch(getApiUrl('/users'), {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(userData),
+    });
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      const err = new Error(errorBody.detail || `Error al crear usuario: HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('[API Users] Error al crear usuario:', err);
     throw err;
   }
 }

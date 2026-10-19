@@ -7,6 +7,8 @@ import TicketDetailModal from './components/TicketDetailModal';
 import TriageModal from './components/TriageModal';
 import AnalyticsView from './components/AnalyticsView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
+import EnterpriseLoginScreen from './components/EnterpriseLoginScreen';
+import UserManagementView from './components/UserManagementView';
 import {
   Inbox,
   BarChart3,
@@ -15,7 +17,8 @@ import {
   Lock,
   KeyRound,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Users
 } from 'lucide-react';
 import {
   fetchTickets,
@@ -26,7 +29,7 @@ import {
   API_BASE
 } from './services/api';
 
-// Pantalla de acceso restringido bajo estética Neu-Natural Glass
+// Paso 1: Pantalla de acceso restringido previa bajo estética Neu-Natural Glass
 function RestrictedAccessScreen({ onAuthenticate, errorReason }) {
   const [inputKey, setInputKey] = useState('');
 
@@ -101,7 +104,7 @@ function RestrictedAccessScreen({ onAuthenticate, errorReason }) {
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('tickets'); // 'tickets' | 'analytics' | 'knowledge'
+  const [currentView, setCurrentView] = useState('tickets'); // 'tickets' | 'analytics' | 'knowledge' | 'users'
   const [tickets, setTickets] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -110,8 +113,8 @@ export default function App() {
   const [isHealthy, setIsHealthy] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+  // Paso 1: Estado de Desbloqueo DEMO_ACCESS_KEY
+  const [isDemoUnlocked, setIsDemoUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
     const keyFromUrl = params.get('key') || params.get('access_token');
@@ -122,9 +125,24 @@ export default function App() {
     }
     return Boolean(sessionStorage.getItem('demo_key'));
   });
-  const [authError, setAuthError] = useState(null);
+  const [demoAuthError, setDemoAuthError] = useState(null);
 
-  // Filters
+  // Paso 2: Estado de Sesión Empresarial RBAC (Admin / Agent)
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    const savedUser = sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user');
+    const savedToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+    if (savedUser && savedToken) {
+      try {
+        return JSON.parse(savedUser);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  // Filtros
   const [selectedUrgency, setSelectedUrgency] = useState('Todas');
   const [selectedStatus, setSelectedStatus] = useState('Todos');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -136,19 +154,35 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleAuthenticate = (key) => {
+  const handleDemoAuthenticate = (key) => {
     sessionStorage.setItem('demo_key', key);
-    setIsAuthenticated(true);
-    setAuthError(null);
+    setIsDemoUnlocked(true);
+    setDemoAuthError(null);
+  };
+
+  const handleLoginSuccess = (user, token) => {
+    setCurrentUser(user);
+    showToast(`Bienvenido/a, ${user.full_name || user.email}. Rol: ${user.role === 'admin' ? 'Administrador' : 'Agente L1'}.`);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('auth_user');
+    sessionStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+    setCurrentUser(null);
+    setCurrentView('tickets');
+    showToast('Sesión corporativa cerrada correctamente.');
+  };
+
+  const handleSwitchAccessKey = () => {
+    sessionStorage.removeItem('demo_key');
+    setIsDemoUnlocked(false);
+    handleLogout();
   };
 
   const loadData = async () => {
-    // Si no hay clave en sesión, marcar como no autenticado
-    const currentKey = sessionStorage.getItem('demo_key');
-    if (!currentKey) {
-      setIsAuthenticated(false);
-      return;
-    }
+    if (!isDemoUnlocked || !currentUser) return;
 
     setIsRefreshing(true);
     try {
@@ -171,13 +205,20 @@ export default function App() {
       setTickets(ticketsData || []);
       if (analyticsData) setAnalytics(analyticsData);
       setIsHealthy(healthData.status === 'healthy');
-      setIsAuthenticated(true);
-      setAuthError(null);
+      setDemoAuthError(null);
     } catch (err) {
       if (err.status === 401 || err.message === 'UNAUTHORIZED') {
-        console.warn('Acceso denegado (401 Unauthorized). Bloqueando pantalla.');
-        setIsAuthenticated(false);
-        setAuthError('La clave de acceso ingresada es inválida o expiró.');
+        console.warn('Acceso denegado (401). Verificando nivel de autorización.');
+        // Si no pasa por la demo key
+        const currentDemoKey = sessionStorage.getItem('demo_key');
+        if (!currentDemoKey) {
+          setIsDemoUnlocked(false);
+          setDemoAuthError('Clave de acceso privada inválida o ausente.');
+        } else {
+          // Si falló el token de usuario
+          handleLogout();
+          showToast('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+        }
       } else {
         console.error('Error al cargar datos en consola de soporte:', err);
         setIsHealthy(false);
@@ -188,13 +229,19 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Revisar si existe clave al montar o cambiar filtros
-    if (isAuthenticated) {
+    if (isDemoUnlocked && currentUser) {
       loadData();
     }
-  }, [isAuthenticated, selectedUrgency, selectedStatus, selectedCategory, searchTerm]);
+  }, [isDemoUnlocked, currentUser, selectedUrgency, selectedStatus, selectedCategory, searchTerm]);
 
-  // Extract distinct categories from analytics
+  // Si no es admin y está en la vista users, regresar a tickets
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'admin' && currentView === 'users') {
+      setCurrentView('tickets');
+    }
+  }, [currentUser, currentView]);
+
+  // Categorías distintas
   const categories = analytics?.categories?.map((c) => c.category) || [
     'ERP & Finanzas',
     'Firma Digital & LegalTech',
@@ -211,7 +258,7 @@ export default function App() {
       setSelectedTicket(fullTicket);
     } catch (err) {
       if (err.status === 401) {
-        setIsAuthenticated(false);
+        handleLogout();
         return;
       }
       console.error(err);
@@ -227,7 +274,7 @@ export default function App() {
       loadData();
     } catch (err) {
       if (err.status === 401) {
-        setIsAuthenticated(false);
+        handleLogout();
         return;
       }
       console.error(err);
@@ -243,7 +290,7 @@ export default function App() {
       loadData();
     } catch (err) {
       if (err.status === 401) {
-        setIsAuthenticated(false);
+        handleLogout();
         return;
       }
       console.error(err);
@@ -263,7 +310,7 @@ export default function App() {
       loadData();
     } catch (err) {
       if (err.status === 401) {
-        setIsAuthenticated(false);
+        handleLogout();
         return;
       }
       console.error(err);
@@ -279,17 +326,32 @@ export default function App() {
     }
   };
 
-  // Si no está autenticado, renderizar pantalla limpia de acceso restringido
-  if (!isAuthenticated) {
+  // ==========================================
+  // FLUJO DE ACCESO SECUENCIAL:
+  // ==========================================
+  // Paso 1: Si no tiene la clave de acceso de demostración, mostrar RestrictedAccessScreen
+  if (!isDemoUnlocked) {
     return (
       <RestrictedAccessScreen
-        onAuthenticate={handleAuthenticate}
-        errorReason={authError}
+        onAuthenticate={handleDemoAuthenticate}
+        errorReason={demoAuthError}
       />
     );
   }
 
+  // Paso 2: Si la clave previa está validada pero no hay sesión activa, mostrar EnterpriseLoginScreen
+  if (!currentUser) {
+    return (
+      <EnterpriseLoginScreen
+        onLoginSuccess={handleLoginSuccess}
+        onSwitchAccessKey={handleSwitchAccessKey}
+      />
+    );
+  }
+
+  // Paso 3: Usuario autenticado corporativamente. Mostrar Consola/Dashboard completa
   const openTicketsCount = analytics?.open_tickets || 0;
+  const isAdmin = currentUser.role === 'admin';
 
   return (
     <div className="flex h-screen overflow-hidden font-sans">
@@ -300,6 +362,8 @@ export default function App() {
         openTicketsCount={openTicketsCount}
         onOpenTriage={() => setIsTriageOpen(true)}
         isHealthy={isHealthy}
+        currentUser={currentUser}
+        onLogout={handleLogout}
         mobileOpen={mobileMenuOpen}
         setMobileOpen={setMobileMenuOpen}
       />
@@ -315,6 +379,8 @@ export default function App() {
           onOpenTriage={() => setIsTriageOpen(true)}
           currentView={currentView}
           onToggleMobileMenu={() => setMobileMenuOpen(true)}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
         {/* Viewport Content */}
@@ -347,6 +413,11 @@ export default function App() {
             <div className="max-w-7xl mx-auto">
               <KnowledgeBaseView />
             </div>
+          )}
+
+          {/* Vista exclusiva para administradores */}
+          {currentView === 'users' && isAdmin && (
+            <UserManagementView />
           )}
         </main>
       </div>
@@ -389,6 +460,18 @@ export default function App() {
           <BookOpen className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Base SOP</span>
         </button>
+
+        {isAdmin && (
+          <button
+            onClick={() => setCurrentView('users')}
+            className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] px-2 rounded-xl transition-all cursor-pointer ${
+              currentView === 'users' ? 'text-[#503E70] font-bold bg-white/70' : 'text-[#6C6677]'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Usuarios</span>
+          </button>
+        )}
 
         <button
           onClick={() => setIsTriageOpen(true)}

@@ -128,3 +128,69 @@ def test_demo_access_key_protection(monkeypatch):
     res_valid_bearer = client.get("/api/tickets", headers={"Authorization": "Bearer TestSecretKey123"})
     assert res_valid_bearer.status_code == 200
 
+def test_enterprise_login():
+    # Login con credenciales válidas del admin
+    res = client.post("/api/auth/login", json={
+        "email": "admin@xion.com",
+        "password": "Heartless2003"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert "token" in data
+    assert data["user"]["email"] == "admin@xion.com"
+    assert data["user"]["role"] == "admin"
+
+    # Login con contraseña incorrecta
+    res_invalid = client.post("/api/auth/login", json={
+        "email": "admin@xion.com",
+        "password": "WrongPassword123"
+    })
+    assert res_invalid.status_code == 401
+
+def test_admin_user_provisioning():
+    # Obtener token de admin
+    login_res = client.post("/api/auth/login", json={
+        "email": "admin@xion.com",
+        "password": "Heartless2003"
+    })
+    token = login_res.json()["token"]
+    admin_headers = {"Authorization": f"Bearer {token}"}
+
+    # Crear nuevo agente
+    import time
+    test_email = f"soporte_{int(time.time())}@xion.com"
+    create_res = client.post("/api/users", headers=admin_headers, json={
+        "email": test_email,
+        "password": "TemporalPass2026",
+        "full_name": "Agente Operacional L1",
+        "role": "agent"
+    })
+    assert create_res.status_code == 201
+    created_user = create_res.json()
+    assert created_user["email"] == test_email
+    assert created_user["role"] == "agent"
+    assert "hashed_password" not in created_user
+
+    # Verificar que el agente puede iniciar sesión
+    agent_login = client.post("/api/auth/login", json={
+        "email": test_email,
+        "password": "TemporalPass2026"
+    })
+    assert agent_login.status_code == 200
+    agent_token = agent_login.json()["token"]
+
+    # El agente ordinario NO debe poder crear usuarios (403 Forbidden)
+    forbidden_res = client.post("/api/users", headers={"Authorization": f"Bearer {agent_token}"}, json={
+        "email": "otro@xion.com",
+        "password": "123456",
+        "role": "agent"
+    })
+    assert forbidden_res.status_code == 403
+
+    # El admin puede listar usuarios
+    list_res = client.get("/api/users", headers=admin_headers)
+    assert list_res.status_code == 200
+    users_list = list_res.json()
+    assert len(users_list) >= 2
+
+

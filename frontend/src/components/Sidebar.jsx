@@ -9,6 +9,9 @@ import {
   Server,
   Zap,
   X,
+  Users,
+  LogOut,
+  Shield
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -17,9 +20,13 @@ export default function Sidebar({
   openTicketsCount,
   onOpenTriage,
   isHealthy,
+  currentUser,
+  onLogout,
   mobileOpen = false,
   setMobileOpen = () => {}
 }) {
+  const isAdmin = currentUser?.role === 'admin';
+
   const navItems = [
     {
       id: 'tickets',
@@ -38,6 +45,16 @@ export default function Sidebar({
       icon: BookOpen,
     },
   ];
+
+  // Pestaña adicional de Gestión de Usuarios exclusiva para administradores
+  if (isAdmin) {
+    navItems.push({
+      id: 'users',
+      label: 'Gestión de Usuarios',
+      icon: Users,
+      badge: 'Admin',
+    });
+  }
 
   const handleNavClick = (viewId) => {
     setCurrentView(viewId);
@@ -113,7 +130,11 @@ export default function Sidebar({
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && item.badge !== undefined && (
-                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[#EDE6FA] text-[#503E70] border border-[#503E70]/20">
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+                    item.badge === 'Admin'
+                      ? 'bg-[#9B8DC4] text-white border-[#7663A4]'
+                      : 'bg-[#EDE6FA] text-[#503E70] border-[#503E70]/20'
+                  }`}>
                     {item.badge}
                   </span>
                 )}
@@ -123,47 +144,70 @@ export default function Sidebar({
         </nav>
       </div>
 
-      {/* Multi-Agent Architecture Status & System Health */}
+      {/* Multi-Agent Architecture Status & Current User Card */}
       <div className="space-y-3 pt-4">
-        <div className="p-3.5 rounded-2xl bg-white/45 border border-white/70 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-[#6C6677] uppercase tracking-wider">
-              Agentes Autónomos
+        {/* Current Authenticated User Box */}
+        {currentUser && (
+          <div className="p-3 rounded-2xl bg-white/55 border border-white/80 shadow-xs">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 ${
+                  isAdmin ? 'bg-gradient-to-tr from-[#9B8DC4] to-[#7663A4]' : 'bg-[#86A892]'
+                }`}>
+                  {currentUser.full_name ? currentUser.full_name.charAt(0).toUpperCase() : currentUser.email.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-[#2E2A36] truncate leading-tight">
+                    {currentUser.full_name || currentUser.email}
+                  </p>
+                  <p className="text-[10px] text-[#6C6677] truncate">
+                    {currentUser.email}
+                  </p>
+                </div>
+              </div>
+              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0 border ${
+                isAdmin
+                  ? 'bg-[#EDE6FA] text-[#503E70] border-[#503E70]/20'
+                  : 'bg-[#DCF3E4] text-[#2A5A3B] border-[#2A5A3B]/20'
+              }`}>
+                {isAdmin ? 'Admin' : 'Agente'}
+              </span>
+            </div>
+
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[11px] font-semibold text-[#7C3627] hover:bg-[#FDE2DB]/60 border border-transparent hover:border-[#F6C5B8] transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        )}
+
+        {/* Multi-Agent Pill */}
+        <div className="p-3 rounded-2xl bg-white/40 border border-white/70 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold text-[#6C6677] uppercase tracking-wider">
+              Pipeline Autónomo
             </span>
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34D399] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
             </span>
           </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between text-[#6C6677]">
-              <span className="flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-[#8E7EB8]" /> Coordinator
-              </span>
-              <span className="text-[10px] text-[#2A5A3B] bg-[#DCF3E4] px-1.5 py-0.5 rounded-md font-mono">Activo</span>
-            </div>
-            <div className="flex items-center justify-between text-[#6C6677]">
-              <span className="flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5 text-[#7663A4]" /> Backend & IA
-              </span>
-              <span className="text-[10px] text-[#2A5A3B] bg-[#DCF3E4] px-1.5 py-0.5 rounded-md font-mono">En línea</span>
-            </div>
-            <div className="flex items-center justify-between text-[#6C6677]">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#A78BFA]" /> QA Reviewer
-              </span>
-              <span className="text-[10px] text-[#2A5A3B] bg-[#DCF3E4] px-1.5 py-0.5 rounded-md font-mono">Verificado</span>
-            </div>
+          <div className="text-[10px] text-[#6C6677] flex items-center justify-between">
+            <span>IA Triaje & SOPs</span>
+            <span className="text-[#2A5A3B] bg-[#DCF3E4] px-1.5 py-0.2 rounded font-mono font-semibold">Listo</span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="pt-2 px-1 text-xs text-[#6C6677] flex items-center justify-between">
+        <div className="pt-1 px-1 text-xs text-[#6C6677] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`} />
             <span className="text-[11px] text-[#6C6677]">{isHealthy ? 'API Conectada' : 'Desconectado'}</span>
           </div>
-          <span className="text-[10px] text-[#958FA3] font-mono">v1.2 Neu-Glass</span>
+          <span className="text-[10px] text-[#958FA3] font-mono">v1.3 Enterprise</span>
         </div>
       </div>
     </div>

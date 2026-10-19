@@ -129,3 +129,27 @@ class AnalyticsResponse(BaseModel):
     categories: List[CategoryMetric]
     urgencies: List[UrgencyMetric]
     statuses: List[StatusMetric]
+
+# Modelos de Autenticación Empresarial y Usuarios
+class LoginRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=1)
+
+class UserBase(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    full_name: Optional[str] = None
+    role: str = Field(default="agent")  # "admin" | "agent"
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=6)
+
+class UserResponse(UserBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class LoginResponse(BaseModel):
+    token: str
+    user: UserResponse
+
