@@ -5,13 +5,9 @@ import {
   BookOpen,
   PlusCircle,
   Cpu,
-  ShieldCheck,
-  Server,
-  Zap,
   X,
   Users,
-  LogOut,
-  Shield
+  LogOut
 } from 'lucide-react';
 
 export default function Sidebar({

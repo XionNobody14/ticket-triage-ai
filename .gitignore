@@ -30,9 +30,14 @@ yarn-error.log*
 
 # Environment & Local Secrets
 .env
+*.env
+*.env.local
+*.env.*
 .env.local
 .env.*.local
 *.local
+.dart_tool/
+build/
 
 # Editor & OS
 .vscode/

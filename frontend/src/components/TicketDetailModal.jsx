@@ -14,19 +14,21 @@ import {
 } from 'lucide-react';
 
 export default function TicketDetailModal({ ticket, onClose, onSave, onResolve }) {
-  if (!ticket) return null;
-
-  const [solutionText, setSolutionText] = useState(ticket.suggested_solution || '');
+  const [solutionText, setSolutionText] = useState(ticket?.suggested_solution || '');
   const [isEditingSolution, setIsEditingSolution] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(ticket.status);
+  const [currentStatus, setCurrentStatus] = useState(ticket?.status || 'Abierto');
   const [newComment, setNewComment] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setSolutionText(ticket.suggested_solution || '');
-    setCurrentStatus(ticket.status);
+    if (ticket) {
+      setSolutionText(ticket.suggested_solution || '');
+      setCurrentStatus(ticket.status);
+    }
   }, [ticket]);
+
+  if (!ticket) return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(solutionText);

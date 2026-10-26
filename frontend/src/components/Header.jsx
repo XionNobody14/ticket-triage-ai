@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Search, Sparkles, Menu, LogOut, ShieldCheck, Shield } from 'lucide-react';
+import { RefreshCw, Search, Sparkles, Menu, LogOut } from 'lucide-react';
 
 export default function Header({
   searchTerm,

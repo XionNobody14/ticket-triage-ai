@@ -15,10 +15,6 @@ export default function KnowledgeBaseView() {
   const [expandedId, setExpandedId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadArticles();
-  }, [selectedCategory]);
-
   const loadArticles = async () => {
     setIsLoading(true);
     try {
@@ -33,6 +29,10 @@ export default function KnowledgeBaseView() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadArticles();
+  }, [selectedCategory]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
